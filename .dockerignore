@@ -1,0 +1,10 @@
+**/.vs
+**/bin
+**/obj
+**/.git
+**/.github
+**/.vscode
+.dockerignore
+Dockerfile
+ecomServer.csproj.user
+appsettings.Development.json
