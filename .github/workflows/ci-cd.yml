@@ -1,0 +1,55 @@
+name: Server CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET 9.0
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build project
+      run: dotnet build --no-restore -c Release
+      
+    # Uncomment the step below if you have test projects
+    # - name: Run tests
+    #   run: dotnet test --no-build -c Release --verbosity normal
+      
+    - name: Verify Docker build
+      run: docker build -t ecom-server-test .
+      
+  deploy:
+    name: Deploy to Render
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # Only run deploy on push to main branch
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Trigger Render Deploy Hook
+      env:
+        deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+      run: |
+        if [ -z "$deploy_url" ]; then
+          echo "ERROR: RENDER_DEPLOY_HOOK_URL secret is not set!"
+          exit 1
+        fi
+        echo "Triggering deployment to Render..."
+        curl -X POST -d "" "$deploy_url"
