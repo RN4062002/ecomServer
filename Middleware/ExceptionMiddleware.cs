@@ -23,10 +23,18 @@ namespace ecomServer.Middleware
             }
             catch (Exception ex)
             {
-                // Log the exception using the ErrorLogService
-                await errorLogService.LogErrorAsync(ex, httpContext);
+                Console.Error.WriteLine(ex);
 
-                // Optionally, you can return a custom error response here
+                try
+                {
+                    await errorLogService.LogErrorAsync(ex, httpContext);
+                }
+                catch (Exception loggingEx)
+                {
+                    Console.Error.WriteLine("Failed to persist error log.");
+                    Console.Error.WriteLine(loggingEx);
+                }
+
                 httpContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 await httpContext.Response.WriteAsync("An unexpected error occurred.");
             }
