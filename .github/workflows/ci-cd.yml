@@ -32,8 +32,11 @@ jobs:
     # - name: Run tests
     #   run: dotnet test --no-build -c Release --verbosity normal
       
-    - name: Verify Docker build
-      run: docker build -t ecom-server-test .
+    - name: Build and Push Docker Image
+      run: |
+        docker build -t ${{secrets.DOCKERHUB_USERNAME}}/ecom-server:latest .
+        echo "${{secrets.DOCKERHUB_PASSWORD}}" | docker login -u ${{secrets.DOCKERHUB_USERNAME}} --password-stdin
+        docker push ${{secrets.DOCKERHUB_USERNAME}}/ecom-server:latest
       
   deploy:
     name: Deploy to Render
