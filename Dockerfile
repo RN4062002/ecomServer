@@ -21,4 +21,4 @@ COPY --from=publish /app/publish .
 
 # Render provides PORT at runtime. Default to 10000 for local container runs.
 EXPOSE 10000
-ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-10000} dotnet ecomServer.dll"]
+ENTRYPOINT ["sh", "-c", "export ASPNETCORE_HTTP_PORTS=; export ASPNETCORE_URLS=http://+:${PORT:-10000}; exec dotnet ecomServer.dll"]

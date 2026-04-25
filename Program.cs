@@ -14,6 +14,28 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var connectionString =
+    builder.Configuration.GetConnectionString("ecomdb") ??
+    builder.Configuration["ECOMDB_CONNECTION_STRING"];
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string is missing. Set ConnectionStrings__ecomdb or ECOMDB_CONNECTION_STRING.");
+}
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+var jwtKey =
+    builder.Configuration["Jwt:Key"] ??
+    builder.Configuration["JWT_KEY"];
+
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException(
+        "JWT key is missing. Set Jwt__Key or JWT_KEY.");
+}
+
 // Add this section to support Render's load balancer
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -32,7 +54,7 @@ builder.Services.AddControllers()
 
 
 // ✅ DbContext 
-builder.Services.AddDbContext<EcomDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ecomdb"))); 
+builder.Services.AddDbContext<EcomDbContext>(options => options.UseSqlServer(connectionString));
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer(); 
@@ -62,9 +84,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-// JWT
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme) 
     .AddJwtBearer(options =>
     {
@@ -74,10 +93,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["Key"]!)
+                Encoding.UTF8.GetBytes(jwtKey)
             ),
             RoleClaimType = "UserType" 
         };

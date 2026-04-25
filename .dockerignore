@@ -8,3 +8,4 @@
 Dockerfile
 ecomServer.csproj.user
 appsettings.Development.json
+appsettings copy.old.json
