@@ -27,6 +27,8 @@ namespace ecomServer.Controllers.AuthControllers
         {
             if (_db.Users.Any(x => x.UserName == dto.UserName))
                 return BadRequest("Username already exists");
+            if (_db.Users.Any(x => x.UserEmail == dto.Email))
+                return BadRequest("User Email already exists");
 
             _PassHash.CreatePasswordHash(dto.Password, out string hash, out string salt);
 
@@ -53,16 +55,15 @@ namespace ecomServer.Controllers.AuthControllers
         public IActionResult Login(LoginDto dto)
         {
             var user = _db.Users.SingleOrDefault(x => x.UserName == dto.UserName && x.IsActive == true);
-            if (user == null)
-                return Unauthorized("Invalid credentials");
 
-            if (!_PassHash.VerifyPassword(dto.Password, user.PasswordHash, user.PasswordSalt))
-                return Unauthorized("Invalid credentials");
+            if (user != null && _PassHash.VerifyPassword(dto.Password, user.PasswordHash, user.PasswordSalt))
+            {
+                user.UserType = _db.UserTypes.Find(user.UserTypeId)!;
 
-            user.UserType = _db.UserTypes.Find(user.UserTypeId); 
-
-            var token = _jwtUtils.GenerateJwtToken(user);
-            return Ok(new { token });
+                var token = _jwtUtils.GenerateJwtToken(user);
+                return Ok(new { token });
+            }
+            return Unauthorized("Invalid credentials");
         }
 
     }
